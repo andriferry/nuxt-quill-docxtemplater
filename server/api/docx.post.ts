@@ -10,14 +10,7 @@ import PizZip from 'pizzip'
 export default defineEventHandler(async (event) => {
   const body = await readBody(event)
 
-  const fileBuffer = await htmlToDocx(body.html, {
-    margin: {
-      top: 720,
-      right: 720,
-      bottom: 720,
-      left: 720,
-    },
-  })
+  const fileBuffer = await htmlToDocx(body.html)
 
   const filePath = join('temp', `draft.docx`)
   writeFileSync(filePath, fileBuffer)
@@ -32,6 +25,7 @@ export default defineEventHandler(async (event) => {
     companyName: 'Apple',
     firstName: 'john',
     secondName: 'doe',
+    company: { companyName: 'Upwork Ltd' },
   })
 
   const out = doc.getZip().generate({

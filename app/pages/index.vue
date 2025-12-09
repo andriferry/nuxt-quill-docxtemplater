@@ -2,7 +2,7 @@
 import type Quill from 'quill'
 import { saveAs } from 'file-saver'
 
-const model = ref('<p>Hi  <span class="mention" data-index="4" data-denotation-char="" data-id="companyName" data-value="{companyName}"><span contenteditable="false"><span class="ql-mention-denotation-char"></span><span class="ql-mention-value">{companyName}</span></span></span> </p><p><br></p><p>Once read in your job post i see you are looking somone vuejs developer who have experience to develop WYSIWYG. Like in this chat. This is chat demo only. Your <span class="mention" data-index="4" data-denotation-char="" data-id="companyName" data-value="{companyName}"><span contenteditable="false"><span class="ql-mention-denotation-char"></span><span class="ql-mention-value">{companyName}</span></span></span>  based on <span class="mention" data-index="5" data-denotation-char="" data-id="companyAddress" data-value="{companyAddress}"><span contenteditable="false"><span class="ql-mention-denotation-char"></span><span class="ql-mention-value">{companyAddress}</span></span></span>   will get some features like this one properly</p><p><br></p><p><br></p><p>Regards</p><p><br></p><p><span class="mention" data-index="1" data-denotation-char="" data-id="firstName" data-value="{firstName}"><span contenteditable="false"><span class="ql-mention-denotation-char"></span><span class="ql-mention-value">{firstName}</span></span></span> <span class="mention" data-index="2" data-denotation-char="" data-id="secondName" data-value="{secondName}"><span contenteditable="false"><span class="ql-mention-denotation-char"></span><span class="ql-mention-value">{secondName}</span></span></span> </p><p><br></p><p>   </p>')
+const model = ref('<p>Hi <span class="mention" data-index="4" data-denotation-char="" data-id="companyName" data-value="{companyName}"><span contenteditable="false"><span class="ql-mention-denotation-char"></span><span class="ql-mention-value">{companyName}</span></span></span></p><p><br></p><p>Once read in your job post i see you are looking somone vuejs developer who have experience to develop WYSIWYG. Like in this chat. This is chat demo only. Your <span class="mention" data-index="4" data-denotation-char="" data-id="companyName" data-value="{companyName}"><span contenteditable="false"><span class="ql-mention-denotation-char"></span><span class="ql-mention-value">{companyName}</span></span></span> based on <span class="mention" data-index="5" data-denotation-char="" data-id="companyAddress" data-value="{companyAddress}"><span contenteditable="false"><span class="ql-mention-denotation-char"></span><span class="ql-mention-value">{companyAddress}</span></span></span> will get some features like this one properly</p><p><br></p><p><br></p><p>Regards</p><p><br></p><p><span class="mention" data-index="1" data-denotation-char="" data-id="firstName" data-value="{firstName}"><span contenteditable="false"><span class="ql-mention-denotation-char"></span><span class="ql-mention-value">{firstName}</span></span></span> <span class="mention" data-index="2" data-denotation-char="" data-id="secondName" data-value="{secondName}"><span contenteditable="false"><span class="ql-mention-denotation-char"></span><span class="ql-mention-value">{secondName}</span></span></span> </p><p><br></p><p><br></p><p><span class="mention" data-index="4" data-denotation-char="" data-id="companyName" data-value="{#company} {companyName} {/company}">﻿<span contenteditable="false"><span class="ql-mention-denotation-char"></span><span class="ql-mention-value">{#company} {companyName} {/company}</span></span>﻿</span> </p><p><br></p>')
 
 const modelJson = ref<any>()
 let quill: Quill | undefined
@@ -34,19 +34,76 @@ const variables = [
       },
     ],
   },
+  {
+    name: 'Proposal Number',
+    value: 'proposalNumber',
+  },
 ]
+
+const variableValues = computed(() => {
+  return variables.flatMap((item) => {
+    if (item.categories && item.items) {
+      const categoryHeader = {
+        id: item.categories,
+        value: item.categories,
+        disabled: true,
+      }
+
+      const items = item.items.map(dataItem => ({
+        name: dataItem.name,
+        id: dataItem.value,
+        category: item.categories,
+      }))
+
+      return [
+        categoryHeader,
+        ...items,
+      ]
+    }
+
+    return [
+      {
+        id: 'other',
+        value: 'other',
+        disabled: true,
+        force: true, // just in case needed for logic later
+      },
+      {
+        name: item.name,
+        id: item.value,
+        category: 'other',
+        force: true,
+      },
+    ]
+  })
+})
 
 const docxtemplater = ref()
 
-const insertVariable = (dataItem: any) => {
+const insertItem = (item: any) => {
+  quill?.getModule('mention').insertItem(item)
+}
+
+const insertVariable = (dataItem: any, parentIndex: number) => {
   quill?.focus()
 
   quill?.getModule('mention').openMenu(dataItem.value.slice(0, 3))
 
-  quill?.getModule('mention').insertItem({
-    ...dataItem,
-    value: `{${dataItem.value}}`,
-  })
+  /// Check parent index
+  const category = variables[parentIndex]?.categories
+
+  if (category) {
+    insertItem({
+      ...dataItem,
+      value: `{${category}.${dataItem.value}}`,
+    })
+  }
+  else {
+    insertItem({
+      ...dataItem,
+      value: `{${dataItem.value}}`,
+    })
+  }
 }
 
 const exportToJson = () => {
@@ -59,19 +116,38 @@ const handleReady = (instance: Quill) => {
   quill = instance
 }
 
-const exportTodocxtemplater = () => {
+const newExportTEst = () => {
   const delta = quill?.getContents()
   const uniqueIds = [...new Set(
-    delta.ops
-      .filter(op => op.insert?.mention?.id)
+    delta
+      .filter(op => op.insert?.mention)
       .map(op => op.insert.mention.id),
   )]
 
-  // ---- Convert to Object Format ----
-  docxtemplater.value = uniqueIds.reduce((acc, id) => {
-    acc[id] = ''
-    return acc
-  }, {})
+  const result = {}
+  uniqueIds.forEach((id) => {
+    // cari item di variables mapping
+    const match = variableValues.value.find(v => v.id === id)
+
+    if (!match)
+      return // skip jika tidak ditemukan
+
+    // jika force: true → taruh di root
+    if (match.force) {
+      result[id] = ''
+      return
+    }
+
+    // cek category
+    const category = match.category || 'other'
+
+    if (!result[category]) {
+      result[category] = {}
+    }
+
+    result[category][id] = ''
+  })
+  docxtemplater.value = result
 }
 
 const exportToDocx = async () => {
@@ -92,6 +168,7 @@ const exportToDocx = async () => {
       <ClientOnly>
         <Editor
           v-model="model"
+          :variable-values="variableValues"
           @ready="handleReady"
         />
       </ClientOnly>
@@ -102,32 +179,44 @@ const exportToDocx = async () => {
         Variables
       </p>
 
-      <div
+      <template
         v-for="data, index in variables"
         :key="index"
-        :tabindex="index"
-        class="collapse collapse-arrow bg-base-100 shadow-md"
       >
-        <div class="collapse-title capitalize font-semibold">
-          {{ data.categories }}
-        </div>
-        <div class="collapse-content text-sm">
-          <ul class="list bg-base-100 rounded-box ">
-            <li
-              v-for="item, indexItem in data.items"
-              :key="indexItem"
-              class=""
-            >
-              <button
-                class="cursor-pointer p-3 rounded-lg hover:bg-slate-100 font-semibold w-full text-start "
-                @click="insertVariable(item)"
+        <div
+          v-if="data.categories"
+          :tabindex="index"
+          class="collapse collapse-arrow bg-base-100 shadow-md"
+        >
+          <div class="collapse-title capitalize font-semibold">
+            {{ data.categories }}
+          </div>
+          <div class="collapse-content text-sm">
+            <ul class="list bg-base-100 rounded-box ">
+              <li
+                v-for="item, indexItem in data.items"
+                :key="indexItem"
+                class=""
               >
-                {{ item.name }}
-              </button>
-            </li>
-          </ul>
+                <button
+                  class="cursor-pointer p-3 rounded-lg hover:bg-slate-100 font-semibold w-full text-start "
+                  @click="insertVariable(item, index)"
+                >
+                  {{ item.name }}
+                </button>
+              </li>
+            </ul>
+          </div>
         </div>
-      </div>
+
+        <button
+          v-else
+          class="cursor-pointer p-3 mt-3 rounded-lg shadow-md hover:bg-slate-100 font-semibold w-full text-start "
+          @click="insertVariable(data, index)"
+        >
+          {{ data.name }}
+        </button>
+      </template>
 
       <div class="mt-3">
         <p class="font-semibold">
@@ -165,18 +254,41 @@ const exportToDocx = async () => {
 
         <div
           tabindex="200"
-          class="collapse collapse-arrow bg-base-100 shadow-md"
-          @click="exportTodocxtemplater"
+          class="bg-base-100 shadow-lg p-4 mt-3"
+          @click="newExportTEst"
         >
-          <div class="collapse-title capitalize font-semibold">
+          <div class=" mb-3 capitalize font-semibold">
             Docxtemplater variable
           </div>
 
-          <div class="collapse-content text-sm">
-            <p class="overflow-auto">
-              {{ docxtemplater }}
-            </p>
-          </div>
+          {{ docxtemplater }}
+
+          <!-- <div class=" text-sm">
+            <div class="flex gap-4 flex-col">
+              <div
+                v-for="item, category of docxtemplater"
+                :key="category"
+                class="flex flex-col gap-3"
+              >
+                <p class="font-bold capitalize category">
+                  Category: {{ category }}
+                </p>
+
+                <div
+                  v-for="dataItem, index of item"
+                  :key="index"
+                  class="w-full"
+                >
+                  <input
+                    v-model="index"
+                    class="w-full rounded-sm p-3 shadow-lg outline-0 border-2 border-sky-400"
+                    type="text"
+                    :placeholder="index"
+                  />
+                </div>
+              </div>
+            </div>
+          </div> -->
         </div>
 
         <div class="mt-4">

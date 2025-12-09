@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import type { QuillyEditor } from 'vue-quilly'
-// import htmlToDocx from 'html-to-docx'
 import Quill from 'quill'
 
 import {
@@ -8,65 +7,20 @@ import {
   MentionBlot,
 } from 'quill-mention'
 
-const emit = defineEmits(['ready'])
+interface Prop {
+  variableValues: []
+}
 
+const props = defineProps<Prop>()
+const emit = defineEmits(['ready'])
 const model = defineModel()
 
 const editor = ref<InstanceType<typeof QuillyEditor>>()
 
 let quill: Quill | undefined
 
-const variables = [
-  {
-    categories: 'person',
-    items: [
-      {
-        name: 'First Name',
-        value: 'firstName',
-      },
-      {
-        name: 'Second Name',
-        value: 'secondName',
-      },
-    ],
-  },
-  {
-    categories: 'company',
-    items: [
-      {
-        name: 'Company Name',
-        value: 'companyName',
-      },
-      {
-        name: 'Company Address',
-        value: 'companyAddress',
-      },
-    ],
-  },
-]
-
 const options = computed(() => {
-  const values = variables.flatMap((category) => {
-    const categoryHeader = {
-      id: category.categories,
-      value: category.categories,
-      disabled: true,
-    }
-
-    const items = category.items.map(item => ({
-      name: item.name,
-      id: item.value,
-      category: category.categories,
-    }))
-
-    return [
-      categoryHeader,
-      ...items,
-    ]
-  })
-
-  const denotation = values.filter(item => !item.disabled).map(item => item.id.slice(0, 3))
-
+  const denotation = props.variableValues.filter(item => !item.disabled).map(item => item.id.slice(0, 3))
   return {
     theme: 'snow',
     modules: {
@@ -119,10 +73,19 @@ const options = computed(() => {
         maxChars: 10,
         showDenotationChar: false,
         onSelect: (item: any, insertItem: any) => {
-          insertItem({
-            ...item,
-            value: `{${item.id}}`,
-          })
+          if (props.variableValues[item.index].category && !props.variableValues[item.index].force) {
+            insertItem({
+              ...item,
+              value: `{${props.variableValues[item.index].category}.${item.id}}`,
+              // `{#${values[item.index].category}} {${item.id}} {/${values[item.index].category}}`,
+            })
+          }
+          else {
+            insertItem({
+              ...item,
+              value: `{${item.id}}`,
+            })
+          }
         },
         renderItem: (data: any) => {
           if (data.disabled) {
@@ -135,7 +98,8 @@ const options = computed(() => {
         },
         mentionDenotationChars: denotation,
         source(searchTerm: any, renderList: any) {
-          renderList(values, searchTerm)
+          console.log(props.variableValues)
+          renderList(props.variableValues, searchTerm)
         },
 
       },
