@@ -15,13 +15,22 @@
   "dependencies": {
     "@tailwindcss/vite": "^4.1.17",
     "daisyui": "^5.5.8",
+    "docxtemplater": "^3.67.6",
+    "file-saver": "^2.0.5",
+    "html-to-docx": "^1.8.0",
     "nuxt": "^4.2.1",
+    "pizzip": "^3.2.0",
+    "quill": "^2.0.3",
+    "quill-mention": "^6.1.1",
     "tailwindcss": "^4.1.17",
     "vue": "^3.5.25",
+    "vue-quilly": "^1.1.6",
     "vue-router": "^4.6.3"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^6.5.1",
+    "@types/file-saver": "^2.0.7",
+    "@types/html-to-docx": "^1.8.0",
     "eslint": "^9.39.1",
     "eslint-plugin-format": "^1.1.0"
   }
