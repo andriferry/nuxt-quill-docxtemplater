@@ -1,0 +1,28 @@
+{
+  "name": "nuxtquilljs",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "nuxt dev",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "restart": "nuxt cleanup && nuxt prepare && nuxt dev"
+  },
+  "dependencies": {
+    "@tailwindcss/vite": "^4.1.17",
+    "daisyui": "^5.5.8",
+    "nuxt": "^4.2.1",
+    "tailwindcss": "^4.1.17",
+    "vue": "^3.5.25",
+    "vue-router": "^4.6.3"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "^6.5.1",
+    "eslint": "^9.39.1",
+    "eslint-plugin-format": "^1.1.0"
+  }
+}
