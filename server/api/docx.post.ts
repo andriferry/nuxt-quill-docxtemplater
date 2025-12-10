@@ -13,7 +13,7 @@ export default defineEventHandler(async (event) => {
 
   const fileBuffer = await htmlToDocx(body.html)
 
-  const filePath = join('temp', `draft.docx`)
+  const filePath = join('/tmp', `draft.docx`)
   writeFileSync(filePath, fileBuffer)
   const templateBuffer = readFileSync(filePath)
   const zip = new PizZip(templateBuffer)
@@ -30,10 +30,9 @@ export default defineEventHandler(async (event) => {
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   })
 
-  // unlink(filePath, (err) => {
-  //   if (err)
-  //     throw err
-  // })
+  unlink(filePath, () => {})
+
+  setHeader(event, 'Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')
 
   return out
 })
