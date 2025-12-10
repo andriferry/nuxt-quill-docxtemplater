@@ -2,7 +2,7 @@
 import type Quill from 'quill'
 import { saveAs } from 'file-saver'
 
-const model = ref('<p class="ql-align-right ql-indent-8">No <span class="mention" data-name="Proposal Number" data-value="{proposalNumber}" data-index="7" data-denotation-char=""><span contenteditable="false"><span class="ql-mention-denotation-char"></span><span class="ql-mention-value">{proposalNumber}</span></span></span> </p><p class="ql-align-right ql-indent-8"><br></p><p class="ql-align-right ql-indent-8"><br></p><p><br></p><p>Hi <span class="mention" data-index="4" data-denotation-char="" data-id="companyName" data-value="{companyName}"><span contenteditable="false"><span class="ql-mention-denotation-char"></span><span class="ql-mention-value">{companyName}</span></span></span></p><p><br></p><p>Once read in your job post i see you are looking somone vuejs developer who have experience to develop WYSIWYG. Like in this chat. This is chat demo only. Your <span class="mention" data-index="4" data-denotation-char="" data-id="companyName" data-value="{companyName}"><span contenteditable="false"><span class="ql-mention-denotation-char"></span><span class="ql-mention-value">{companyName}</span></span></span> based on <span class="mention" data-index="5" data-denotation-char="" data-id="companyAddress" data-value="{companyAddress}"><span contenteditable="false"><span class="ql-mention-denotation-char"></span><span class="ql-mention-value">{companyAddress}</span></span></span> will get some features like this one properly</p><p><br></p><p><br></p><p>Regards</p><p><br></p><p><span class="mention" data-index="1" data-denotation-char="" data-id="firstName" data-value="{firstName}"><span contenteditable="false"><span class="ql-mention-denotation-char"></span><span class="ql-mention-value">{firstName}</span></span></span> <span class="mention" data-index="2" data-denotation-char="" data-id="secondName" data-value="{secondName}"><span contenteditable="false"><span class="ql-mention-denotation-char"></span><span class="ql-mention-value">{secondName}</span></span></span></p><p><br></p><p><br></p><p><span class="mention" data-index="4" data-denotation-char="" data-id="companyName" data-value="{#company} {companyName} {/company}"><span contenteditable="false"><span class="ql-mention-denotation-char"></span><span class="ql-mention-value">{#company} {companyName} {/company}</span></span></span></p>')
+const model = ref('<p class="ql-indent-8 ql-align-right">No <span class="mention" data-name="Proposal Number" data-value="{proposalNumber}" data-index="7" data-denotation-char=""><span contenteditable="false"><span class="ql-mention-denotation-char"></span><span class="ql-mention-value">{proposalNumber}</span></span></span></p><p class="ql-indent-8 ql-align-right"><br></p><p class="ql-indent-8 ql-align-right"><br></p><p><br></p><p>Hi <span class="mention" data-name="First Name" data-value="{person.firstName}" data-index="1" data-denotation-char=""><span contenteditable="false"><span class="ql-mention-denotation-char"></span><span class="ql-mention-value">{person.firstName}</span></span></span> </p><p><br></p><p>Once read in your job post i see you are looking somone vuejs developer who have experience to develop WYSIWYG. Like in this chat. This is chat demo only. Your <span class="mention" data-name="Company Name" data-value="{company.companyName}" data-index="4" data-denotation-char=""><span contenteditable="false"><span class="ql-mention-denotation-char"></span><span class="ql-mention-value">{company.companyName}</span></span></span> based on <span class="mention" data-name="Company Address" data-value="{company.companyAddress}" data-index="5" data-denotation-char=""><span contenteditable="false"><span class="ql-mention-denotation-char"></span><span class="ql-mention-value">{company.companyAddress}</span></span></span> will get some features like this one properly</p><p><br></p><p><br></p><p>Regards</p><p><br></p><p><span class="mention" data-name="First Name" data-value="{person.firstName}" data-index="1" data-denotation-char=""><span contenteditable="false"><span class="ql-mention-denotation-char"></span><span class="ql-mention-value">{person.firstName}</span></span></span> <span class="mention" data-name="Second Name" data-value="{person.secondName}" data-index="2" data-denotation-char=""><span contenteditable="false"><span class="ql-mention-denotation-char"></span><span class="ql-mention-value">{person.secondName}</span></span></span> </p><p><br></p><p><br></p>')
 
 const modelJson = ref<any>()
 let quill: Quill | undefined
@@ -172,6 +172,8 @@ const exportToDocx = async () => {
   })
 
   saveAs(res, 'output.docx')
+
+  console.log(docxtemplater.value)
 }
 
 const setDocxValue = (key: string, value: string) => {
@@ -190,7 +192,7 @@ const setDocxValue = (key: string, value: string) => {
   for (const category in data) {
     const group = data[category]
     if (typeof group === 'object' && group !== null && key in group) {
-      docRef.value = {
+      docxtemplater.value = {
         ...data,
         [category]: {
           ...group,
@@ -224,7 +226,6 @@ const flattenedFields = computed(() => {
     category,
     value,
   ]) => {
-    console.log(category, value)
     if (typeof value === 'object') {
       Object.keys(value).forEach((k) => {
         res.push({
@@ -240,8 +241,6 @@ const flattenedFields = computed(() => {
       })
     }
   })
-
-  console.log(docxtemplater.value)
 
   return res
 })
@@ -354,30 +353,48 @@ onMounted(() => {
             Docxtemplater variable
           </div>
 
-          {{ docxtemplater }}
+          <div class=" text-sm">
+            <div class="flex gap-4 flex-col">
+              <div
+                v-for="item, category of docxtemplater"
+                :key="category"
+                class="flex flex-col gap-3"
+              >
+                <template v-if="typeof item === 'string'">
+                  <input
+                    class="w-full rounded-sm p-3 shadow-lg outline-0 border-2 border-sky-400"
+                    type="text"
+                    :value="getDocxValue(category)"
+                    :placeholder="category"
+                    @input="e => setDocxValue(category, e.target.value)"
+                  />
+                </template>
+
+                <template v-else>
+                  <p class="font-bold capitalize category">
+                    Category: {{ category }}
+                  </p>
+
+                  <div
+                    v-for="dataItem, key of item"
+                    :key="key"
+                    class="w-full"
+                  >
+                    <input
+                      class="w-full rounded-sm p-3 shadow-lg outline-0 border-2 border-sky-400"
+                      type="text"
+                      :value="getDocxValue(key)"
+                      :placeholder="key"
+                      @input="e => setDocxValue(key, e.target.value)"
+                    />
+                  </div>
+                </template>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div class="space-y-3">
-          <h2 class="text-lg font-bold">
-            Fill Variables
-          </h2>
-
-          <!-- Input dinamis -->
-          <div
-            v-for="item in flattenedFields"
-            :key="item.key"
-            class="flex gap-2 items-center"
-          >
-            <label class="w-40 font-medium">{{ item.label }}</label>
-
-            <input
-              type="text"
-              class="border px-2 py-1 rounded w-full"
-              :value="getDocxValue(item.key)"
-              @input="e => setDocxValue(item.key, e.target.value)"
-            />
-          </div>
-
           <h3 class="mt-4 font-semibold">
             Current Docxtemplater State:
           </h3>
