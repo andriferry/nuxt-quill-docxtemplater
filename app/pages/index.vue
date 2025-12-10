@@ -2,7 +2,7 @@
 import type Quill from 'quill'
 import { saveAs } from 'file-saver'
 
-const model = ref('<p>Hi <span class="mention" data-index="4" data-denotation-char="" data-id="companyName" data-value="{companyName}"><span contenteditable="false"><span class="ql-mention-denotation-char"></span><span class="ql-mention-value">{companyName}</span></span></span></p><p><br></p><p>Once read in your job post i see you are looking somone vuejs developer who have experience to develop WYSIWYG. Like in this chat. This is chat demo only. Your <span class="mention" data-index="4" data-denotation-char="" data-id="companyName" data-value="{companyName}"><span contenteditable="false"><span class="ql-mention-denotation-char"></span><span class="ql-mention-value">{companyName}</span></span></span> based on <span class="mention" data-index="5" data-denotation-char="" data-id="companyAddress" data-value="{companyAddress}"><span contenteditable="false"><span class="ql-mention-denotation-char"></span><span class="ql-mention-value">{companyAddress}</span></span></span> will get some features like this one properly</p><p><br></p><p><br></p><p>Regards</p><p><br></p><p><span class="mention" data-index="1" data-denotation-char="" data-id="firstName" data-value="{firstName}"><span contenteditable="false"><span class="ql-mention-denotation-char"></span><span class="ql-mention-value">{firstName}</span></span></span> <span class="mention" data-index="2" data-denotation-char="" data-id="secondName" data-value="{secondName}"><span contenteditable="false"><span class="ql-mention-denotation-char"></span><span class="ql-mention-value">{secondName}</span></span></span> </p><p><br></p><p><br></p><p><span class="mention" data-index="4" data-denotation-char="" data-id="companyName" data-value="{#company} {companyName} {/company}">﻿<span contenteditable="false"><span class="ql-mention-denotation-char"></span><span class="ql-mention-value">{#company} {companyName} {/company}</span></span>﻿</span> </p><p><br></p>')
+const model = ref('<p class="ql-align-right ql-indent-8">No <span class="mention" data-name="Proposal Number" data-value="{proposalNumber}" data-index="7" data-denotation-char=""><span contenteditable="false"><span class="ql-mention-denotation-char"></span><span class="ql-mention-value">{proposalNumber}</span></span></span> </p><p class="ql-align-right ql-indent-8"><br></p><p class="ql-align-right ql-indent-8"><br></p><p><br></p><p>Hi <span class="mention" data-index="4" data-denotation-char="" data-id="companyName" data-value="{companyName}"><span contenteditable="false"><span class="ql-mention-denotation-char"></span><span class="ql-mention-value">{companyName}</span></span></span></p><p><br></p><p>Once read in your job post i see you are looking somone vuejs developer who have experience to develop WYSIWYG. Like in this chat. This is chat demo only. Your <span class="mention" data-index="4" data-denotation-char="" data-id="companyName" data-value="{companyName}"><span contenteditable="false"><span class="ql-mention-denotation-char"></span><span class="ql-mention-value">{companyName}</span></span></span> based on <span class="mention" data-index="5" data-denotation-char="" data-id="companyAddress" data-value="{companyAddress}"><span contenteditable="false"><span class="ql-mention-denotation-char"></span><span class="ql-mention-value">{companyAddress}</span></span></span> will get some features like this one properly</p><p><br></p><p><br></p><p>Regards</p><p><br></p><p><span class="mention" data-index="1" data-denotation-char="" data-id="firstName" data-value="{firstName}"><span contenteditable="false"><span class="ql-mention-denotation-char"></span><span class="ql-mention-value">{firstName}</span></span></span> <span class="mention" data-index="2" data-denotation-char="" data-id="secondName" data-value="{secondName}"><span contenteditable="false"><span class="ql-mention-denotation-char"></span><span class="ql-mention-value">{secondName}</span></span></span></p><p><br></p><p><br></p><p><span class="mention" data-index="4" data-denotation-char="" data-id="companyName" data-value="{#company} {companyName} {/company}"><span contenteditable="false"><span class="ql-mention-denotation-char"></span><span class="ql-mention-value">{#company} {companyName} {/company}</span></span></span></p>')
 
 const modelJson = ref<any>()
 let quill: Quill | undefined
@@ -92,15 +92,22 @@ const insertVariable = (dataItem: any, parentIndex: number) => {
   /// Check parent index
   const category = variables[parentIndex]?.categories
 
+  console.log(variableValues.value)
+  console.log(dataItem.value)
+
+  const variableIndex = variableValues.value.findIndex((item: any) => item.id === dataItem.value)
+
   if (category) {
     insertItem({
       ...dataItem,
+      index: variableIndex,
       value: `{${category}.${dataItem.value}}`,
     })
   }
   else {
     insertItem({
       ...dataItem,
+      index: variableIndex,
       value: `{${dataItem.value}}`,
     })
   }
