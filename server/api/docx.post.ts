@@ -30,10 +30,10 @@ export default defineEventHandler(async (event) => {
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   })
 
-  unlink(filePath, (err) => {
-    if (err)
-      throw err
-  })
+  // unlink(filePath, (err) => {
+  //   if (err)
+  //     throw err
+  // })
 
   return out
 })
