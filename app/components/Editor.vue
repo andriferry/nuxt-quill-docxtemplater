@@ -98,7 +98,6 @@ const options = computed(() => {
         },
         mentionDenotationChars: denotation,
         source(searchTerm: any, renderList: any) {
-          console.log(props.variableValues)
           renderList(props.variableValues, searchTerm)
         },
 

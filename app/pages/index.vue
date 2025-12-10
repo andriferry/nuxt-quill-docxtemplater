@@ -78,7 +78,50 @@ const variableValues = computed(() => {
   })
 })
 
-const docxtemplater = ref()
+const docxtemplater = ref({})
+
+const convertDocxTemplated = () => {
+  const regex = /class="mention"[^>]*data-index="(\d+)"/g
+  const indexes = []
+  const result = {}
+  let match = regex.exec(model.value)
+
+  while (match !== null) {
+    indexes.push(Number(match[1]))
+    match = regex.exec(model.value) // lanjutkan exec berikutnya
+  }
+
+  for (const idx of indexes) {
+    const item = variableValues.value[idx]
+    if (!item)
+      continue
+
+    const {
+      id,
+      category,
+      force,
+    } = item
+
+    if (force) {
+      if (!result[id])
+        result[id] = ''
+      continue
+    }
+
+    if (!category)
+      continue
+
+    if (!result[category]) {
+      result[category] = {}
+    }
+
+    if (!result[category][id]) {
+      result[category][id] = ''
+    }
+  }
+
+  docxtemplater.value = result
+}
 
 const insertItem = (item: any) => {
   quill?.getModule('mention').insertItem(item)
@@ -91,9 +134,6 @@ const insertVariable = (dataItem: any, parentIndex: number) => {
 
   /// Check parent index
   const category = variables[parentIndex]?.categories
-
-  console.log(variableValues.value)
-  console.log(dataItem.value)
 
   const variableIndex = variableValues.value.findIndex((item: any) => item.id === dataItem.value)
 
@@ -123,40 +163,6 @@ const handleReady = (instance: Quill) => {
   quill = instance
 }
 
-const newExportTEst = () => {
-  const delta = quill?.getContents()
-  const uniqueIds = [...new Set(
-    delta
-      .filter(op => op.insert?.mention)
-      .map(op => op.insert.mention.id),
-  )]
-
-  const result = {}
-  uniqueIds.forEach((id) => {
-    // cari item di variables mapping
-    const match = variableValues.value.find(v => v.id === id)
-
-    if (!match)
-      return // skip jika tidak ditemukan
-
-    // jika force: true → taruh di root
-    if (match.force) {
-      result[id] = ''
-      return
-    }
-
-    // cek category
-    const category = match.category || 'other'
-
-    if (!result[category]) {
-      result[category] = {}
-    }
-
-    result[category][id] = ''
-  })
-  docxtemplater.value = result
-}
-
 const exportToDocx = async () => {
   const html = quill?.root.innerHTML
 
@@ -167,6 +173,87 @@ const exportToDocx = async () => {
 
   saveAs(res, 'output.docx')
 }
+
+const setDocxValue = (key: string, value: string) => {
+  const data = docxtemplater.value
+
+  // Root level
+  if (key in data) {
+    docxtemplater.value = {
+      ...data,
+      [key]: value,
+    }
+    return
+  }
+
+  // Nested level
+  for (const category in data) {
+    const group = data[category]
+    if (typeof group === 'object' && group !== null && key in group) {
+      docRef.value = {
+        ...data,
+        [category]: {
+          ...group,
+          [key]: value,
+        },
+      }
+      return
+    }
+  }
+}
+
+const getDocxValue = (key: string) => {
+  const data = docxtemplater.value
+
+  if (key in data)
+    return data[key]
+
+  for (const category in data) {
+    if (data[category]?.[key] !== undefined) {
+      return data[category][key]
+    }
+  }
+
+  return ''
+}
+
+const flattenedFields = computed(() => {
+  const res: { label: string, key: string }[] = []
+
+  Object.entries(docxtemplater.value).forEach(([
+    category,
+    value,
+  ]) => {
+    console.log(category, value)
+    if (typeof value === 'object') {
+      Object.keys(value).forEach((k) => {
+        res.push({
+          label: `${category} → ${k}`,
+          key: k,
+        })
+      })
+    }
+    else {
+      res.push({
+        label: category,
+        key: category,
+      })
+    }
+  })
+
+  console.log(docxtemplater.value)
+
+  return res
+})
+
+watch(model, (value) => {
+  if (value)
+    convertDocxTemplated()
+})
+
+onMounted(() => {
+  convertDocxTemplated()
+})
 </script>
 
 <template>
@@ -262,40 +349,39 @@ const exportToDocx = async () => {
         <div
           tabindex="200"
           class="bg-base-100 shadow-lg p-4 mt-3"
-          @click="newExportTEst"
         >
           <div class=" mb-3 capitalize font-semibold">
             Docxtemplater variable
           </div>
 
           {{ docxtemplater }}
+        </div>
 
-          <!-- <div class=" text-sm">
-            <div class="flex gap-4 flex-col">
-              <div
-                v-for="item, category of docxtemplater"
-                :key="category"
-                class="flex flex-col gap-3"
-              >
-                <p class="font-bold capitalize category">
-                  Category: {{ category }}
-                </p>
+        <div class="space-y-3">
+          <h2 class="text-lg font-bold">
+            Fill Variables
+          </h2>
 
-                <div
-                  v-for="dataItem, index of item"
-                  :key="index"
-                  class="w-full"
-                >
-                  <input
-                    v-model="index"
-                    class="w-full rounded-sm p-3 shadow-lg outline-0 border-2 border-sky-400"
-                    type="text"
-                    :placeholder="index"
-                  />
-                </div>
-              </div>
-            </div>
-          </div> -->
+          <!-- Input dinamis -->
+          <div
+            v-for="item in flattenedFields"
+            :key="item.key"
+            class="flex gap-2 items-center"
+          >
+            <label class="w-40 font-medium">{{ item.label }}</label>
+
+            <input
+              type="text"
+              class="border px-2 py-1 rounded w-full"
+              :value="getDocxValue(item.key)"
+              @input="e => setDocxValue(item.key, e.target.value)"
+            />
+          </div>
+
+          <h3 class="mt-4 font-semibold">
+            Current Docxtemplater State:
+          </h3>
+          <pre class="bg-gray-100 p-3 rounded text-sm">{{ docxtemplater }}</pre>
         </div>
 
         <div class="mt-4">
