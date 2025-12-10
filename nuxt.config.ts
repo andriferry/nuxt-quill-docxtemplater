@@ -7,4 +7,5 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   css: ['~/assets/style/main.css'],
   vite: { plugins: [tailwindcss()] },
+  app: { head: { title: 'Nuxt Quill + docxtemplater' } },
 })

@@ -1,5 +1,6 @@
 import {
   readFileSync,
+  unlink,
   writeFileSync,
 } from 'node:fs'
 import { join } from 'node:path'
@@ -21,17 +22,17 @@ export default defineEventHandler(async (event) => {
     linebreaks: true,
   })
 
-  doc.render({
-    companyName: 'Apple',
-    firstName: 'john',
-    secondName: 'doe',
-    company: { companyName: 'Upwork Ltd' },
-  })
+  doc.render(body.docxObj)
 
   const out = doc.getZip().generate({
     type: 'blob',
     mimeType:
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  })
+
+  unlink(filePath, (err) => {
+    if (err)
+      throw err
   })
 
   return out
