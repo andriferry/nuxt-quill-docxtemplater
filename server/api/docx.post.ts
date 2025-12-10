@@ -1,6 +1,6 @@
 import {
   readFileSync,
-  unlink,
+  // unlink,
   writeFileSync,
 } from 'node:fs'
 import { join } from 'node:path'
